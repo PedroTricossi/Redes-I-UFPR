@@ -122,6 +122,8 @@ void sendMessage(int socket_id, message_t* message, message_t* response) {
   int valid = 0;
   int panic = 6; // Kills command after trying 6 times on timeout
 
+  fprintf(stdout, "entrou!!");
+
   while(!valid) {
     if(send(socket_id, message, sizeof(*message), 0) == -1) {
       perror("Send failed");
@@ -143,6 +145,8 @@ void sendMessage(int socket_id, message_t* message, message_t* response) {
 
 void recvMessage(int socket_id, message_t* message, int control) {
   int count = 0; // Eliminates duplicate message caused by loopback
+
+  fprintf(stdout, "entrou!!");
 
   // For some reason reads one more time its own response after client receives it twice
   // Iteration is a bool, saying if message should be used or not

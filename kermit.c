@@ -59,18 +59,18 @@ int checkParity(message_t* message) {
 // Interprocess Communication
 void createFile() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/UFPR-Redes1/temporaryIPC.txt", "w");
+    file_pointer = fopen("/home/pedro/Redes-I-UFPR/temporaryIPC.txt", "w");
     fputc('y', file_pointer);
     fclose(file_pointer);
 }
 
 void removeFile() {
-    remove("/home/pedro/UFPR-Redes1/temporaryIPC.txt");
+    remove("/home/pedro/Redes-I-UFPR/temporaryIPC.txt");
 }
 
 int serverRead() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/UFPR-Redes1/temporaryIPC.txt", "r");
+    file_pointer = fopen("/home/pedro/Redes-I-UFPR/temporaryIPC.txt", "r");
 
     char permission = fgetc(file_pointer);
     fclose(file_pointer);
@@ -84,7 +84,7 @@ int serverRead() {
 
 void changePermission(char new_p) {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/UFPR-Redes1/temporaryIPC.txt", "r+");
+    file_pointer = fopen("/home/pedro/Redes-I-UFPR/temporaryIPC.txt", "r+");
     fputc(new_p, file_pointer);
     fclose(file_pointer);
 }

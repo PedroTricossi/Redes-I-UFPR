@@ -9,30 +9,30 @@
 #define MARKER 126 // 126 == 0X7E == 01111110
 
 // Types
-#define CD_T 0
-#define LS_T 1
-#define MKDIR_T 2
+#define CD_T 6
+#define LS_T 7
+#define MKDIR_T 8
 #define EXIT_T 6
-#define ACK_T 8
-#define NACK_T 9
+#define ACK_T 3
+#define NACK_T 2
 #define LIF_T 10
 #define LSC_T 11
 #define CA_T 12
 #define END_T 13
 #define ENDL_T 14
-#define ERRO_T 15
+#define ERRO_T 4
 
 // Errors
-#define PERMISSION_E 1
-#define DIR_E 2
-#define ARQ_E 3
-#define LINHA_E 4
+#define DIR_E 'a'
+#define PERMISSION_E 'b'
+#define DIR_EXISTENCE 'c'
+#define ARQ_EXISTENCE 'd'
 
 typedef struct {
     unsigned char marker;
-    unsigned char data_size:4;
+    unsigned char data_size:6;
     unsigned char sequence;
-    unsigned char type:4;
+    unsigned int type:4;
     unsigned char data[MAX_DATA];
     unsigned char parity;
 } message_t;
