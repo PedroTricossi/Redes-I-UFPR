@@ -9,8 +9,8 @@ void sendResponse(int socket_id, message_t* response) ;
 
 int recvResponse(int socket_id, message_t* response);
 
-void sendMessage(int socket_id, message_t* message, message_t* response);
+void sendMessage(int socket_id, message_t* message, message_t* response, int sender);
 
-void recvMessage(int socket_id, message_t* message, int control);
+void recvMessage(int socket_id, message_t* message, int wait_for);
 
 #endif

@@ -14,17 +14,21 @@
 #include "server_lib.h"
 
 
-int execute_cd(message_t* message, int* socket) {
+int execute_cd(message_t* message, int socket) {
     message_t response;
 
     response = createMessage();
 
     char* path = (char*)message->data;
 
+    fprintf(stdout, "AQUI PASSOU!\n");
+
     if(!checkParity(message)) {
         setHeader(&response, NACK_T);
         return 0;
     }
+
+    fprintf(stdout, "PARIDADE MEU OVO\n");
 
     if (chdir(path) != 0) {
         errorHeader(&response, errno);
@@ -32,9 +36,12 @@ int execute_cd(message_t* message, int* socket) {
         return 0;
     }
 
+    fprintf(stdout, "SE PARAR AQUI MENTIU\n");
+
     setHeader(&response, ACK_T);
 
-    sendResponse(*socket, &response);
+    sendMessage(socket, message, &response, 1);
+
     return 1;
 }
 

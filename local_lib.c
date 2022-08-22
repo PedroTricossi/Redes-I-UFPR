@@ -91,7 +91,7 @@ void execute_ls_local() {
     printf("\n");
 }
 
-void execute_cd_server(int* socket) {
+void execute_cd_server(int socket) {
     char *path;
     message_t message, response;
 
@@ -100,14 +100,15 @@ void execute_cd_server(int* socket) {
     
     int path_size = strlen(path);
 
+    message = createMessage();
+
     if(path_size > MAX_DATA) {
         printf("Invalid path: maximum allowed path has length %d\n", MAX_DATA);
     }
-    
     else {
         message.data_size = path_size;
         message.sequence = 0;
-        message.type = 0;
+        message.type = 7;
 
         for(int i = 0; i < path_size; i++) {
             message.data[i] = path[i];
@@ -116,20 +117,25 @@ void execute_cd_server(int* socket) {
         verticalParity(&message);
     }
 
-    sendMessage(*socket, &message, &response);
+    sendMessage(socket, &message, &response, 0);
 
-    if(response.type == ACK_T) {
-        printf("Directory change to '%s' on server-side\n", path);
-        return;
-        
+    while (response.type != ACK_T)
+    {
+        sleep(1);
+        recvMessage(socket, &response, 1);
+
+        fprintf(stdout, "%d\n", response.sender);
     }
     
+    printf("Directory change to '%s' on server-side\n", path);
+    return;
+        
     fprintf(stderr, "ERRO!!!");
 
     message = createMessage();
     message.type = ACK_T;
 
-    sendResponse(*socket, &message);
+    sendResponse(socket, &message);
 }
 
 void execute_mkdir_server(){}

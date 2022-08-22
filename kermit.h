@@ -35,6 +35,7 @@ typedef struct {
     unsigned int type:4;
     unsigned char data[MAX_DATA];
     unsigned char parity;
+    unsigned int sender;
 } message_t;
 
 message_t createMessage();

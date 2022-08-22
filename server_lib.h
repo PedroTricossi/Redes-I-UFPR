@@ -2,7 +2,7 @@
 #define __SERVERLIB__
 
 // DONE
-int execute_cd(message_t* message, int* socket);
+int execute_cd(message_t* message, int socket);
 
 // TODO
 void execute_ls(message_t* message, int* socket);

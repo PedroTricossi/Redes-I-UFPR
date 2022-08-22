@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include<netinet/in.h>
 #include<errno.h>
@@ -118,40 +119,38 @@ int recvResponse(int socket_id, message_t* message, message_t* response) {
   return 1;
 }
 
-void sendMessage(int socket_id, message_t* message, message_t* response) {
-  int valid = 0;
-  int panic = 6; // Kills command after trying 6 times on timeout
-
-  fprintf(stdout, "entrou!!");
-
-  while(!valid) {
-    if(send(socket_id, message, sizeof(*message), 0) == -1) {
-      perror("Send failed");
-    }
-    else {
-      valid = recvResponse(socket_id, message, response);
-      if((response->data[0] == 5)) { // If timeout
-        if(panic > 0) {
-          panic--;
-        }
-        else {
-          printf("Panic! Server no responding, killing command...\n");
-          valid = 1;
-        }
-      }
-    }
+void sendMessage(int socket_id, message_t* message, message_t* response, int sender) {
+  message->sender = sender;
+  fprintf(stdout, "escreveu");
+  if(write(socket_id, message, sizeof(*message)) == -1) {
+    perror("Send failed");
   }
+
+  // organiza file descriptor para timeout
+  struct pollfd fd;
+  fd.fd = socket_id;
+  fd.events = POLLIN;
+
+  if( poll(&fd, 1, 1) )
+    read(socket_id, message, sizeof(*message));
 }
 
-void recvMessage(int socket_id, message_t* message, int control) {
+void recvMessage(int socket_id, message_t* message, int wait_for) {
   int count = 0; // Eliminates duplicate message caused by loopback
 
-  fprintf(stdout, "entrou!!");
 
-  // For some reason reads one more time its own response after client receives it twice
-  // Iteration is a bool, saying if message should be used or not
-  while(count < 2 - control) {
-    if(recv(socket_id, message, sizeof(*message), 0) == -1) {
+  struct pollfd fd;
+  fd.fd = socket_id;
+  fd.events = POLLIN;
+
+  // int retorno = poll(&fd, 1, 5*1000);
+  // if( retorno == 0 )
+  //   return;
+  // else if( retorno < 0 )
+  //   return;
+
+  while(count < 1) {
+    if(read(socket_id, message, sizeof(*message)) == -1) {
       perror("Received failed");
     }
     else {
@@ -161,9 +160,9 @@ void recvMessage(int socket_id, message_t* message, int control) {
     }
   }
 
-  // After receiving, server stops reading until client get answer
-  // or client timeout
-  if(!control) {
-    changePermission('n');
-  }
+  if (message->sender != wait_for)
+    recvMessage(socket_id, message, wait_for);
+  
+  else
+    message->sender = 8;
 }

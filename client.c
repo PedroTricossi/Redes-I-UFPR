@@ -30,7 +30,7 @@ int main() {
             execute_cd_local();
         }  
         else if(strncmp("cd", comando, 2) == 0){
-            execute_cd_server(&socket);
+            execute_cd_server(socket);
         } 
         else if(strncmp("lmkdir", comando, 6) == 0){
             execute_mkdir_local();
@@ -39,6 +39,7 @@ int main() {
             execute_mkdir_server();
         } 
         else if (strncmp("lls", comando, 3) == 0){
+            fprintf(stdout, "LLS");
             execute_ls_local();
         }
         else if(strncmp("ls", comando, 6) == 0){

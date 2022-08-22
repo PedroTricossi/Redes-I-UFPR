@@ -26,11 +26,10 @@ int main() {
 
     while(1){
         package = createMessage();
+        printf("Server reading\n");
 
         if(serverRead()) {
-            printf("Server reading\n");
             recvMessage(socket, &package, 0);
-            printf("%d", package.type);
         } else {
             command = 16; // Impossible command
         }
@@ -38,8 +37,8 @@ int main() {
 
         switch (package.type)
         {
-        case 0:
-            execute_cd(&package, &socket);
+        case 7:
+            execute_cd(&package, socket);
             break;
         
         case 1:
