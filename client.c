@@ -22,6 +22,8 @@ int main() {
 
     int seq = 0;
 
+    createFile();
+
     while(1) { 
         printCurrentDir();
         scanf("%s", comando);

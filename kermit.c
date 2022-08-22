@@ -4,6 +4,9 @@
 
 #include "kermit.h"
 
+#define ONE 0b100
+#define ZERO 0b000
+
 message_t createMessage() {
     message_t message;
 
@@ -11,6 +14,7 @@ message_t createMessage() {
     message.data_size = 0;
     message.sequence = 0;
     message.type = 0;
+    message.sender = 0;
     for(int i = 0; i < MAX_DATA; i++) {
         message.data[i] = 0;
     }
@@ -33,7 +37,7 @@ void verticalParity(message_t* message) {
     int size = message->data_size;
     unsigned char parity;
 
-    parity = message->data_size ^ message->sequence ^ message->type;
+    parity = ONE ^ ZERO;
     for(int i = 0; i < size; i++) {
         parity ^= message->data[i];
     }
@@ -45,10 +49,11 @@ int checkParity(message_t* message) {
     int size = message->data_size;
     unsigned char parity;
 
-    parity = message->data_size ^ message->sequence ^ message->type;
+    parity = ONE ^ ZERO;
     for(int i = 0; i < size; i++) {
         parity ^= message->data[i];
     }
+
     
     if(message->parity == parity)
         return 1;
@@ -59,8 +64,8 @@ int checkParity(message_t* message) {
 // Interprocess Communication
 void createFile() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/Redes-I-UFPR/temporaryIPC.txt", "w");
-    fputc('y', file_pointer);
+    file_pointer = fopen("/home/pedro/Redes-I-UFPR/readPermission.txt", "w");
+    fprintf(file_pointer, "42");
     fclose(file_pointer);
 }
 
@@ -68,23 +73,37 @@ void removeFile() {
     remove("/home/pedro/Redes-I-UFPR/temporaryIPC.txt");
 }
 
-int serverRead() {
+int server_can_read() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/Redes-I-UFPR/temporaryIPC.txt", "r");
+    file_pointer = fopen("/home/pedro/Redes-I-UFPR/readPermission.txt", "r");
 
     char permission = fgetc(file_pointer);
     fclose(file_pointer);
 
-    if(permission == 'y') {
+    if(permission == 's') {
         return 1;    
     }
 
     return 0;
 }
 
-void changePermission(char new_p) {
+int client_can_read() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/Redes-I-UFPR/temporaryIPC.txt", "r+");
-    fputc(new_p, file_pointer);
+    file_pointer = fopen("/home/pedro/Redes-I-UFPR/readPermission.txt", "r");
+
+    char permission = fgetc(file_pointer);
+    fclose(file_pointer);
+
+    if(permission == 'c') {
+        return 1;    
+    }
+
+    return 0;
+}
+
+void change_permission(char new_p) {
+    FILE *file_pointer;
+    file_pointer = fopen("/home/pedro/Redes-I-UFPR/readPermission.txt", "w");
+    fprintf(file_pointer, "%s", &new_p);
     fclose(file_pointer);
 }

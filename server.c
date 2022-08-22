@@ -22,13 +22,13 @@ int main() {
     unsigned char command;
 
     socket = ConexaoRawSocket(socket_mode);
-    createFile();
 
     while(1){
-        package = createMessage();
-        printf("Server reading\n");
 
-        if(serverRead()) {
+
+        if(server_can_read() == 1) {
+            printf("Server reading\n");
+            package = createMessage();
             recvMessage(socket, &package, 0);
         } else {
             command = 16; // Impossible command

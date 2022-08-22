@@ -21,22 +21,16 @@ int execute_cd(message_t* message, int socket) {
 
     char* path = (char*)message->data;
 
-    fprintf(stdout, "AQUI PASSOU!\n");
-
     if(!checkParity(message)) {
         setHeader(&response, NACK_T);
         return 0;
     }
-
-    fprintf(stdout, "PARIDADE MEU OVO\n");
 
     if (chdir(path) != 0) {
         errorHeader(&response, errno);
         verticalParity(&response);
         return 0;
     }
-
-    fprintf(stdout, "SE PARAR AQUI MENTIU\n");
 
     setHeader(&response, ACK_T);
 
@@ -67,8 +61,7 @@ int execute_mkdir(message_t* message, int* socket){
         }
     }
 
-    setHeader(&response, ACK_T);
-    sendResponse(*socket, &response);
+    setHeader(&response, 3);
     return 1;
 }
 

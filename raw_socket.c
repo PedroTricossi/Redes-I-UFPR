@@ -27,6 +27,9 @@
 
 #include "kermit.h"
 
+int SERVER_READ = 2;
+int CLIENT_READ = 2;
+
 int ConexaoRawSocket(char *device)
 {
   int soquete;
@@ -69,100 +72,48 @@ int ConexaoRawSocket(char *device)
   return soquete;
 }
 
-void sendResponse(int socket_id, message_t* response) {
-  if(send(socket_id, response, sizeof(*response), 0) == -1) {
-    perror("Send failed");
-  }
-}
-
-int recvResponse(int socket_id, message_t* message, message_t* response) {
-  unsigned char response_type;
-  int count = 0; // Eliminates duplicated causedby loopback + 1 reading its own message
-  int timeout = 5;
-  time_t start_t, end_t;
-  double diff_t;
-  time(&start_t);
-
-  while ((diff_t < timeout) && (count < 3)) {
-    if(recv(socket_id, response, sizeof(*response), 0) == -1) {
-      perror("Received failed");
-    }
-    else {
-        if(response->marker == MARKER) {
-          count++;
-          // First catch must be its own message
-          if((count == 1) && (response->type != message->type)) count--;
-        }
-    }
-    // Increments timer
-    time(&end_t);
-    diff_t = difftime(end_t, start_t);
-  }
-
-  changePermission('y');
-  if(response->marker == MARKER) {
-    response_type = response->type;
-    // Returns zero on worng parity and on NACK
-    if(response_type == NACK_T) {
-      return 0;
-    }
-    else if((response_type != ACK_T) && (!checkParity(response))) {
-      return 0;
-    }
-  }
-  else { // Timeout
-    errorHeader(response, 5);
-    return 0;
-  }
-
-  // Return 1 if got response
-  return 1;
-}
-
 void sendMessage(int socket_id, message_t* message, message_t* response, int sender) {
   message->sender = sender;
-  fprintf(stdout, "escreveu");
   if(write(socket_id, message, sizeof(*message)) == -1) {
     perror("Send failed");
   }
 
+  if(sender == 0){
+    change_permission('s');
+  } else if (sender == 1){
+    change_permission('c');
+  }
   // organiza file descriptor para timeout
   struct pollfd fd;
   fd.fd = socket_id;
   fd.events = POLLIN;
 
-  if( poll(&fd, 1, 1) )
+  if( poll(&fd, 1, 1))
     read(socket_id, message, sizeof(*message));
 }
 
-void recvMessage(int socket_id, message_t* message, int wait_for) {
-  int count = 0; // Eliminates duplicate message caused by loopback
-
-
+int recvMessage(int socket_id, message_t* message, int wait_for) {
+  // organiza file descriptor para timeout
   struct pollfd fd;
   fd.fd = socket_id;
   fd.events = POLLIN;
+  
+  // espera algum pacote, caso demore mais que TIMEOUT segundos, retorna 2
+  int retorno = poll(&fd, 1, 5*1000);
+  if( retorno == 0 )
+    return 2;
+  else if( retorno < 0 )
+    return(-1);
 
-  // int retorno = poll(&fd, 1, 5*1000);
-  // if( retorno == 0 )
-  //   return;
-  // else if( retorno < 0 )
-  //   return;
-
-  while(count < 1) {
-    if(read(socket_id, message, sizeof(*message)) == -1) {
-      perror("Received failed");
-    }
-    else {
-      if(message->marker == MARKER) {
-        count++;
-      }
-    }
+  if(read(socket_id, message, sizeof(*message)) == -1) {
+    perror("Received failed");
   }
 
-  if (message->sender != wait_for)
-    recvMessage(socket_id, message, wait_for);
-  
-  else
+  if (message->sender == wait_for){
     message->sender = 8;
+    change_permission('p');
+    return;
+  }
+  else
+    recvMessage(socket_id, message, wait_for); 
 }

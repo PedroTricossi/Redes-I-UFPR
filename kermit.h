@@ -55,8 +55,9 @@ void createFile();
 
 void removeFile();
 
-int serverRead();
+int server_can_read();
+int client_can_read();
 
-void changePermission(char new_p);
+void change_permission(char new_p);
 
 #endif

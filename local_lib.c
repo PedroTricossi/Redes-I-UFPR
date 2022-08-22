@@ -15,6 +15,7 @@
 #define MAX_ARGS 4
 #define LINE_LENGTH 5
 #define STRING_MAX_SIZE 128
+
  
 // Colors
 #define RESET "\033[0m"
@@ -101,7 +102,7 @@ void execute_cd_server(int socket) {
     int path_size = strlen(path);
 
     message = createMessage();
-
+    response = createMessage();
     if(path_size > MAX_DATA) {
         printf("Invalid path: maximum allowed path has length %d\n", MAX_DATA);
     }
@@ -119,13 +120,10 @@ void execute_cd_server(int socket) {
 
     sendMessage(socket, &message, &response, 0);
 
-    while (response.type != ACK_T)
-    {
-        sleep(1);
-        recvMessage(socket, &response, 1);
-
-        fprintf(stdout, "%d\n", response.sender);
-    }
+    while (client_can_read() != 1){}
+    
+    response = createMessage();
+    recvMessage(socket, &response, 1);
     
     printf("Directory change to '%s' on server-side\n", path);
     return;

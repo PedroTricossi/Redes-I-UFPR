@@ -5,12 +5,13 @@
 
 int ConexaoRawSocket(char *device);
 
-void sendResponse(int socket_id, message_t* response) ;
+int server_can_read();
 
-int recvResponse(int socket_id, message_t* response);
+int client_can_read();
+
 
 void sendMessage(int socket_id, message_t* message, message_t* response, int sender);
 
-void recvMessage(int socket_id, message_t* message, int wait_for);
+int recvMessage(int socket_id, message_t* message, int wait_for);
 
 #endif
