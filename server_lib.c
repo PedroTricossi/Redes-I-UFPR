@@ -40,28 +40,26 @@ int execute_cd(message_t* message, int socket) {
 }
 
 
-int execute_mkdir(message_t* message, int* socket){
-    struct stat st = {0};
+int execute_mkdir(message_t* message, int socket){
     message_t response;
 
     response = createMessage();
-    
-    char* path = (char*)message->data;
 
+    char* dir_name = (char*)message->data;
     if(!checkParity(message)) {
         setHeader(&response, NACK_T);
         return 0;
     }
 
-    if (stat(path, &st) == -1) {
-        if(mkdir(path, 0700) != 0){
-            errorHeader(&response, errno);
-            verticalParity(&response);
-            return 0;
-        }
+    if (mkdir(dir_name, 755) != 0) {
+        errorHeader(&response, errno);
+        verticalParity(&response);
+        return 0;
     }
 
-    setHeader(&response, 3);
+    setHeader(&response, ACK_T);
+
+    sendMessage(socket, message, &response, 1);
     return 1;
 }
 

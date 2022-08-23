@@ -38,7 +38,7 @@ int main() {
             execute_mkdir_local();
         } 
         else if(strncmp("mkdir", comando, 5) == 0){
-            execute_mkdir_server();
+            execute_mkdir_server(socket);
         } 
         else if (strncmp("lls", comando, 3) == 0){
             fprintf(stdout, "LLS");

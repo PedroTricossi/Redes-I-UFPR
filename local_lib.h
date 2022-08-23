@@ -18,7 +18,7 @@ void execute_ls_local();
 void execute_cd_server(int socket);
 
 // TODO
-void execute_mkdir_server();
+void execute_mkdir_server(int socket);
 
 // TODO
 void execute_ls_server();

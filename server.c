@@ -45,8 +45,8 @@ int main() {
             execute_ls(&package, &socket);
             break;
         
-        case 2:
-            execute_mkdir(&package, &socket);
+        case 8:
+            execute_mkdir(&package, socket);
             break;
         
         case 3:

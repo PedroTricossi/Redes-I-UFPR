@@ -136,7 +136,49 @@ void execute_cd_server(int socket) {
     sendResponse(socket, &message);
 }
 
-void execute_mkdir_server(){}
+void execute_mkdir_server(int socket){
+    char *dir_name;
+    message_t message, response;
+
+    dir_name = malloc(STRING_MAX_SIZE * sizeof(char));
+    scanf("%s", dir_name);
+    int dname_size = strlen(dir_name);
+
+    message = createMessage();
+    response = createMessage();
+
+    if (dname_size > MAX_DATA) {
+        printf("Invalid dir name: maximum allowed dir name has length %d\n", MAX_DATA);
+    }
+    else {
+        message.data_size = dname_size;
+        message.sequence = 0;
+        message.type = 8;
+
+        for(int i = 0; i < dname_size; i++) {
+            message.data[i] = dir_name[i];
+        }
+
+        verticalParity(&message);
+    }
+    
+    sendMessage(socket, &message, &response, 0);
+    while (client_can_read() != 1){}
+    
+    response = createMessage();
+    recvMessage(socket, &response, 1);
+
+    printf("Directory '%s' created on server-side\n", dir_name);
+    return;
+        
+    fprintf(stderr, "ERRO!!!");
+
+    message = createMessage();
+    message.type = ACK_T;
+
+    sendResponse(socket, &message);
+
+}
 
 // TODO
 void execute_ls_server(){}
