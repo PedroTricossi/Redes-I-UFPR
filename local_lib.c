@@ -63,33 +63,17 @@ void execute_mkdir_local() {
 }
 
 void execute_ls_local() {
-    DIR *d;
-    struct dirent *dir;
-    int i = 1;
     char *path;
+    char *ls;
 
     path = malloc(STRING_MAX_SIZE * sizeof(char));
+    ls = malloc(STRING_MAX_SIZE + 3 * sizeof(char));
     scanf("%s", path);
+    strcpy(ls, "ls ");
 
-    d = opendir(path);
-    
-    // Reads dir contents
-    if (d) {
-        while((dir = readdir(d)) != NULL) {
-            if(i % LINE_LENGTH != 0) {
-                printf("%-25s", dir->d_name);
-            }
-            else {
-                printf("%-25s\n", dir->d_name);
-            }
-            i++;
-        }
-        closedir(d);
-    }
-    else {
-        printf("%s: no such directory\n", path);
-    }
-    printf("\n");
+    strcat(ls, path);
+
+    system(ls);
 }
 
 void execute_cd_server(int socket) {
@@ -120,10 +104,11 @@ void execute_cd_server(int socket) {
 
     sendMessage(socket, &message, &response, 0);
 
-    while (client_can_read() != 1){}
-    
-    response = createMessage();
-    recvMessage(socket, &response, 1);
+    while (client_can_read() != 1){
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0)
+            exit(1);
+    }
     
     printf("Directory change to '%s' on server-side\n", path);
     return;
@@ -163,10 +148,11 @@ void execute_mkdir_server(int socket){
     }
     
     sendMessage(socket, &message, &response, 0);
-    while (client_can_read() != 1){}
-    
-    response = createMessage();
-    recvMessage(socket, &response, 1);
+    while (client_can_read() != 1){
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0)
+            exit(1);
+    }
 
     printf("Directory '%s' created on server-side\n", dir_name);
     return;
@@ -181,7 +167,52 @@ void execute_mkdir_server(int socket){
 }
 
 // TODO
-void execute_ls_server(){}
+void execute_ls_server(int socket){
+    char *dir_name;
+    message_t message, response;
+
+    dir_name = malloc(STRING_MAX_SIZE * sizeof(char));
+    scanf("%s", dir_name);
+    int dname_size = strlen(dir_name);
+
+    message = createMessage();
+    response = createMessage();
+
+    if (dname_size > MAX_DATA) {
+        printf("Invalid dir name: maximum allowed dir name has length %d\n", MAX_DATA);
+    }
+    else {
+        message.data_size = dname_size;
+        message.sequence = 0;
+        message.type = 1;
+
+        for(int i = 0; i < dname_size; i++) {
+            message.data[i] = dir_name[i];
+        }
+
+        verticalParity(&message);
+    }
+    
+    sendMessage(socket, &message, &response, 0);
+    while (client_can_read() != 1){
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0)
+            exit(1);
+    }
+    
+    // response = createMessage();
+    // recvMessage(socket, &response, 1);
+
+    printf("Directory '%s' created on server-side\n", dir_name);
+    return;
+        
+    fprintf(stderr, "ERRO!!!");
+
+    message = createMessage();
+    message.type = ACK_T;
+
+    sendResponse(socket, &message);
+}
 
 // TODO
 void execute_get(){}

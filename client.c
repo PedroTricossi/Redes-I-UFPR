@@ -41,11 +41,10 @@ int main() {
             execute_mkdir_server(socket);
         } 
         else if (strncmp("lls", comando, 3) == 0){
-            fprintf(stdout, "LLS");
             execute_ls_local();
         }
         else if(strncmp("ls", comando, 6) == 0){
-            execute_ls_server();
+            execute_ls_server(socket);
         } 
         else if (strncmp("get", comando, 3) == 0){
             execute_get();

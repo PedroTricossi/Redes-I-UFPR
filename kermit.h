@@ -60,4 +60,8 @@ int client_can_read();
 
 void change_permission(char new_p);
 
+void sendMessage(int socket_id, message_t* message, message_t* response, int sender);
+
+int recvMessage(int socket_id, message_t* message, int wait_for);
+
 #endif

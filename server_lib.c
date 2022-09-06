@@ -13,6 +13,7 @@
 #include "kermit.h"
 #include "server_lib.h"
 
+#define BUFFER 100
 
 int execute_cd(message_t* message, int socket) {
     message_t response;
@@ -63,7 +64,32 @@ int execute_mkdir(message_t* message, int socket){
     return 1;
 }
 
-void execute_ls(message_t* message, int* socket){}
+void execute_ls(message_t* message, int* socket){
+    message_t response;
+    char *ls;
+    char pTmp[BUFFER];
+    FILE *fp;
+
+    response = createMessage();
+
+    char* dir_name = (char*)message->data;
+    if(!checkParity(message)) {
+        setHeader(&response, NACK_T);
+        return ;
+    }
+    ls = malloc(1027 * sizeof(char));
+
+    strcpy(ls, "ls ");
+    strcat(ls, dir_name);
+
+    fp = popen(ls,"r");
+
+    if(fp != NULL){
+        fgets(pTmp, BUFFER-1, fp);
+    }
+
+    // enviar pTmp para o client
+}
 
 // TODO
 void execute_get_server(){}

@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-#include <poll.h>
 
 #include<netinet/in.h>
 #include<errno.h>
@@ -70,50 +69,4 @@ int ConexaoRawSocket(char *device)
   }
 
   return soquete;
-}
-
-void sendMessage(int socket_id, message_t* message, message_t* response, int sender) {
-  message->sender = sender;
-  if(write(socket_id, message, sizeof(*message)) == -1) {
-    perror("Send failed");
-  }
-
-  if(sender == 0){
-    change_permission('s');
-  } else if (sender == 1){
-    change_permission('c');
-  }
-  // organiza file descriptor para timeout
-  struct pollfd fd;
-  fd.fd = socket_id;
-  fd.events = POLLIN;
-
-  if( poll(&fd, 1, 1))
-    read(socket_id, message, sizeof(*message));
-}
-
-int recvMessage(int socket_id, message_t* message, int wait_for) {
-  // organiza file descriptor para timeout
-  struct pollfd fd;
-  fd.fd = socket_id;
-  fd.events = POLLIN;
-  
-  // espera algum pacote, caso demore mais que TIMEOUT segundos, retorna 2
-  int retorno = poll(&fd, 1, 5*1000);
-  if( retorno == 0 )
-    return 2;
-  else if( retorno < 0 )
-    return(-1);
-
-  if(read(socket_id, message, sizeof(*message)) == -1) {
-    perror("Received failed");
-  }
-
-  if (message->sender == wait_for){
-    message->sender = 8;
-    change_permission('p');
-    return;
-  }
-  else
-    recvMessage(socket_id, message, wait_for); 
 }
