@@ -1,5 +1,5 @@
-#ifndef __KERMIT__
-#define __KERMIT__
+#ifndef __PROTOCOL__
+#define __PROTOCOL__
 
 #define MAX_DATA 15
 #define MAX_SEQ 256
@@ -9,30 +9,14 @@
 #define MARKER 126 // 126 == 0X7E == 01111110
 
 // Types
-#define CD_T 6
-#define LS_T 7
-#define MKDIR_T 8
-#define EXIT_T 6
-#define ACK_T 3
-#define NACK_T 2
-#define LIF_T 10
-#define LSC_T 11
-#define CA_T 12
-#define END_T 13
-#define ENDL_T 14
-#define ERRO_T 4
-
-// Errors
-#define DIR_E 'a'
-#define PERMISSION_E 'b'
-#define DIR_EXISTENCE 'c'
-#define ARQ_EXISTENCE 'd'
+enum TIPOS {CD = 6, LS = 7, MKDIR = 8, ACK = 3, NACK = 2, ERRO = 17, TX = 63, FIM_TX = 46, GET = 9, DESCRITOR = 24, DADOS = 32, PUT = 10, OK = 1};
+enum ERROS {DIR_E = 'a', PERMISSION_E = 'b', DIR_ALREADY_EXIST = 'c', ARQ_ALREADY_EXIST = 'd'};
 
 typedef struct {
     unsigned char marker;
     unsigned char data_size:6;
-    unsigned char sequence;
-    unsigned int type:4;
+    unsigned char sequence:4;
+    unsigned int type:6;
     unsigned char data[MAX_DATA];
     unsigned char parity;
     unsigned int sender;
@@ -60,7 +44,7 @@ int client_can_read();
 
 void change_permission(char new_p);
 
-void sendMessage(int socket_id, message_t* message, message_t* response, int sender);
+void sendMessage(int socket_id, message_t* message, int sender);
 
 int recvMessage(int socket_id, message_t* message, int wait_for);
 

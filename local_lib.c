@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 
 #include "raw_socket.h"
-#include "kermit.h"
+#include "protocol.h"
 #include "local_lib.h"
 
 // Global const
@@ -78,12 +78,15 @@ void execute_ls_local() {
 
 void execute_cd_server(int socket) {
     char *path;
+    int rapido = 0;
     message_t message, response;
 
     path = malloc(STRING_MAX_SIZE * sizeof(char));
     scanf("%s", path);
     
     int path_size = strlen(path);
+
+    fprintf(stdout, "PATH: %s \n", path);
 
     message = createMessage();
     response = createMessage();
@@ -102,27 +105,36 @@ void execute_cd_server(int socket) {
         verticalParity(&message);
     }
 
-    sendMessage(socket, &message, &response, 0);
+    sendMessage(socket, &message,  0);
+    sleep(1);
 
-    while (client_can_read() != 1){
+    while (client_can_read() != 1){   
+        rapido = 1; 
         response = createMessage();
-        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0)
-            exit(1);
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
     }
-    
-    printf("Directory change to '%s' on server-side\n", path);
-    return;
+
+    if (rapido == 0){
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    }
+
+    if(response.type == OK)
+        printf("CD funcionou para: '%s' \n", path);
         
-    fprintf(stderr, "ERRO!!!");
-
-    message = createMessage();
-    message.type = ACK_T;
-
-    sendResponse(socket, &message);
+    else if (response.type == ERRO)
+        printf("Erro na troca de diretórios \n");
 }
 
 void execute_mkdir_server(int socket){
     char *dir_name;
+    int rapido = 0;
     message_t message, response;
 
     dir_name = malloc(STRING_MAX_SIZE * sizeof(char));
@@ -147,28 +159,39 @@ void execute_mkdir_server(int socket){
         verticalParity(&message);
     }
     
-    sendMessage(socket, &message, &response, 0);
-    while (client_can_read() != 1){
+
+    sendMessage(socket, &message,  0);
+    sleep(1);
+
+    while (client_can_read() != 1){   
+        rapido = 1; 
         response = createMessage();
-        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0)
-            exit(1);
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
     }
 
-    printf("Directory '%s' created on server-side\n", dir_name);
-    return;
+    if (rapido == 0){
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    }
+
+    if(response.type == OK)
+        printf("Diretório: '%s' \n", dir_name);
         
-    fprintf(stderr, "ERRO!!!");
-
-    message = createMessage();
-    message.type = ACK_T;
-
-    sendResponse(socket, &message);
+    else if (response.type == ERRO)
+        printf("Erro ao criar diretório \n");
 
 }
 
 // TODO
 void execute_ls_server(int socket){
     char *dir_name;
+    int rapido = 0;
     message_t message, response;
 
     dir_name = malloc(STRING_MAX_SIZE * sizeof(char));
@@ -193,11 +216,22 @@ void execute_ls_server(int socket){
         verticalParity(&message);
     }
     
-    sendMessage(socket, &message, &response, 0);
-    while (client_can_read() != 1){
+    sendMessage(socket, &message,  0);
+    while (client_can_read() != 1){   
+        rapido = 1; 
         response = createMessage();
-        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0)
-            exit(1);
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    }
+
+    if (rapido == 0){
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
     }
     
     // response = createMessage();
@@ -209,7 +243,7 @@ void execute_ls_server(int socket){
     fprintf(stderr, "ERRO!!!");
 
     message = createMessage();
-    message.type = ACK_T;
+    message.type = ACK;
 
     sendResponse(socket, &message);
 }

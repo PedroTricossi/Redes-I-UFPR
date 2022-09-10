@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -g -Wall
-OBJ_CLIENT = raw_socket.o kermit.o  client.o local_lib.o
-OBJ_SERVER = raw_socket.o kermit.o  server.o server_lib.o local_lib.o
-DEPS = raw_socket.h kermit.h local_lib.h
+OBJ_CLIENT = raw_socket.o protocol.o  client.o local_lib.o
+OBJ_SERVER = raw_socket.o protocol.o  server.o server_lib.o local_lib.o
+DEPS = raw_socket.h protocol.h local_lib.h
 
 all: client server
 

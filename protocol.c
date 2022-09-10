@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <poll.h>
 
-#include "kermit.h"
+#include "protocol.h"
 
 
 #define ONE 0b100
@@ -30,7 +30,7 @@ void setHeader(message_t* response, int type) {
 }
 
 void errorHeader(message_t* response, int error) {
-    response->type = ERRO_T; // ERROR
+    response->type = ERRO; // ERROR
     response->data_size = 1;
     response->data[0] = error;
 }
@@ -110,7 +110,7 @@ void change_permission(char new_p) {
     fclose(file_pointer);
 }
 
-void sendMessage(int socket_id, message_t* message, message_t* response, int sender) {
+void sendMessage(int socket_id, message_t* message, int sender) {
   message->sender = sender;
   if(write(socket_id, message, sizeof(*message)) == -1) {
     perror("Send failed");
@@ -151,7 +151,7 @@ int recvMessage(int socket_id, message_t* message, int wait_for) {
   if (message->sender == wait_for){
     message->sender = 8;
     change_permission('p');
-    return;
+    return 0;
   }
   else
     recvMessage(socket_id, message, wait_for); 

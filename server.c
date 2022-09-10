@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 
 #include "raw_socket.h"
-#include "kermit.h"
+#include "protocol.h"
 #include "server_lib.h"
 #include "local_lib.h"
 
@@ -31,7 +31,7 @@ int main() {
             package = createMessage();
             recvMessage(socket, &package, 0);
         } else {
-            command = 16; // Impossible command
+            package = createMessage(); // Impossible command
         }
 
 

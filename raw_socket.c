@@ -24,7 +24,7 @@
 #include<stdlib.h>	//malloc
 #include<string.h>	//strlen
 
-#include "kermit.h"
+#include "protocol.h"
 
 int SERVER_READ = 2;
 int CLIENT_READ = 2;

@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 
 #include "raw_socket.h"
-#include "kermit.h"
+#include "protocol.h"
 #include "local_lib.h"
 
 int main() {

@@ -10,32 +10,34 @@
 #include <sys/stat.h>
 
 #include "raw_socket.h"
-#include "kermit.h"
+#include "protocol.h"
 #include "server_lib.h"
 
 #define BUFFER 100
 
 int execute_cd(message_t* message, int socket) {
     message_t response;
-
     response = createMessage();
 
     char* path = (char*)message->data;
 
     if(!checkParity(message)) {
-        setHeader(&response, NACK_T);
+        setHeader(&response, NACK);
         return 0;
     }
+
+    fprintf(stdout, "PASSOU PARIDADE\n");
 
     if (chdir(path) != 0) {
-        errorHeader(&response, errno);
+        errorHeader(&response, ERRO);
         verticalParity(&response);
+        sendMessage(socket, &response,  1);
         return 0;
     }
 
-    setHeader(&response, ACK_T);
+    setHeader(&response, OK);
 
-    sendMessage(socket, message, &response, 1);
+    sendMessage(socket, &response,  1);
 
     return 1;
 }
@@ -48,19 +50,19 @@ int execute_mkdir(message_t* message, int socket){
 
     char* dir_name = (char*)message->data;
     if(!checkParity(message)) {
-        setHeader(&response, NACK_T);
+        setHeader(&response, NACK);
         return 0;
     }
 
     if (mkdir(dir_name, 755) != 0) {
-        errorHeader(&response, errno);
+        errorHeader(&response, ERRO);
         verticalParity(&response);
+        sendMessage(socket, &response,  1);
         return 0;
     }
+    setHeader(&response, OK);
 
-    setHeader(&response, ACK_T);
-
-    sendMessage(socket, message, &response, 1);
+    sendMessage(socket, &response,  1);
     return 1;
 }
 
@@ -74,7 +76,7 @@ void execute_ls(message_t* message, int* socket){
 
     char* dir_name = (char*)message->data;
     if(!checkParity(message)) {
-        setHeader(&response, NACK_T);
+        setHeader(&response, NACK);
         return ;
     }
     ls = malloc(1027 * sizeof(char));
