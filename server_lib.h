@@ -5,7 +5,7 @@
 int execute_cd(message_t* message, int socket);
 
 // TODO
-void execute_ls(message_t* message, int* socket);
+void execute_ls(message_t* message, int socket);
 
 // DONE
 int execute_mkdir(message_t* message, int socket);

@@ -42,7 +42,7 @@ int main() {
             break;
         
         case 1:
-            execute_ls(&package, &socket);
+            execute_ls(&package, socket);
             break;
         
         case 8:

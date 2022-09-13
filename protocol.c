@@ -5,6 +5,7 @@
 
 #include "protocol.h"
 
+#define PATH "/home/carlos/UFPR/redes/"
 
 #define ONE 0b100
 #define ZERO 0b000
@@ -66,18 +67,18 @@ int checkParity(message_t* message) {
 // Interprocess Communication
 void createFile() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/Redes-I-UFPRreadPermission.txt", "w");
+    file_pointer = fopen("/home/carlos/UFPR/redes/Redes-I-UFPRreadPermission.txt", "w");
     fprintf(file_pointer, "42");
     fclose(file_pointer);
 }
 
 void removeFile() {
-    remove("/home/pedro/Redes-I-UFPRtemporaryIPC.txt");
+    remove("/home/carlos/UFPR/redes/Redes-I-UFPRtemporaryIPC.txt");
 }
 
 int server_can_read() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/Redes-I-UFPRreadPermission.txt", "r");
+    file_pointer = fopen("/home/carlos/UFPR/redes/Redes-I-UFPRreadPermission.txt", "r");
 
     char permission = fgetc(file_pointer);
     fclose(file_pointer);
@@ -91,7 +92,7 @@ int server_can_read() {
 
 int client_can_read() {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/Redes-I-UFPRreadPermission.txt", "r");
+    file_pointer = fopen("/home/carlos/UFPR/redes/Redes-I-UFPRreadPermission.txt", "r");
 
     char permission = fgetc(file_pointer);
     fclose(file_pointer);
@@ -105,7 +106,7 @@ int client_can_read() {
 
 void change_permission(char new_p) {
     FILE *file_pointer;
-    file_pointer = fopen("/home/pedro/Redes-I-UFPRreadPermission.txt", "w");
+    file_pointer = fopen("/home/carlos/UFPR/redes/Redes-I-UFPRreadPermission.txt", "w");
     fprintf(file_pointer, "%s", &new_p);
     fclose(file_pointer);
 }

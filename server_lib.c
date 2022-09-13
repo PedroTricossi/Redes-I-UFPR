@@ -66,11 +66,12 @@ int execute_mkdir(message_t* message, int socket){
     return 1;
 }
 
-void execute_ls(message_t* message, int* socket){
-    message_t response;
+void execute_ls(message_t* message, int socket){
+    message_t response, lsData;
     char *ls;
     char pTmp[BUFFER];
     FILE *fp;
+    int i = 0, sequence = 0, rapido = 0;
 
     response = createMessage();
 
@@ -85,12 +86,73 @@ void execute_ls(message_t* message, int* socket){
     strcat(ls, dir_name);
 
     fp = popen(ls,"r");
-
-    if(fp != NULL){
-        fgets(pTmp, BUFFER-1, fp);
-    }
-
+  
     // enviar pTmp para o client
+    // envia o ok
+    printf("Vou enviar o ok\n");
+    setHeader(&response, OK);
+    sendMessage(socket, &response, 1);
+    printf("Enviei o ok\n");
+    // recebe ack do ok
+    while (server_can_read() != 1); 
+    response = createMessage();
+    if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+        fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+        return;
+    }
+    if(response.type != ACK)
+        return;
+    
+    // diz que vai comecar
+    printf("Recebi ack do ok\nVou enviar o TX\n");
+    response = createMessage();
+    setHeader(&response, TX);
+    sendMessage(socket, &response, 1);
+    printf("Enviei o TX\n");
+    while (server_can_read() != 1); 
+    response = createMessage();
+    if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+        fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+        return;
+    }
+    if(response.type != ACK)
+        return;
+    printf("Recebi ack do tx\n");
+    // envia os dados
+    lsData = createMessage();
+    while (fgets(pTmp, BUFFER-1, fp)) {
+        printf("Comecando nova msg\n");
+        setHeader(&lsData, DADOS);
+        lsData.sequence = sequence % MAX_SEQ;
+        for (int j = 0; j < MAX_DATA; j++) {
+            lsData.data[j] = pTmp[j];
+        }
+        verticalParity(&lsData);
+        sendMessage(socket, &lsData, 1);
+        // espera ack ou nack
+        while (server_can_read() != 1); 
+        rapido = 1; 
+        response = createMessage();
+        if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    
+        // mandar a prox
+        if(response.type == ACK) {
+            printf("recebi um ack\n");
+            sequence++;
+            
+        }
+        // reenviar
+        else if (response.type == NACK)
+            printf("Recebi um nack\n");
+    }
+    response = createMessage();
+    setHeader(&response, FIM_TX);
+    sendMessage(socket, &response, 1);
+    
+    
 }
 
 // TODO
