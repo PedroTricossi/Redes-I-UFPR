@@ -67,17 +67,19 @@ int execute_mkdir(message_t* message, int socket){
 }
 
 void execute_ls(message_t* message, int socket){
-    message_t response, lsData;
+    message_t newMessage, response, lsData;
     char *ls;
     char pTmp[BUFFER];
     FILE *fp;
-    int i = 0, sequence = 0, rapido = 0;
+    int i = 0, sequence = 0, rapido = 0, flag=0;
 
     response = createMessage();
+    newMessage = createMessage();
 
     char* dir_name = (char*)message->data;
     if(!checkParity(message)) {
-        setHeader(&response, NACK);
+        setHeader(&response, NACK); //arrumar
+        sendMessage(socket, &response, 1);
         return ;
     }
     ls = malloc(1027 * sizeof(char));
@@ -86,41 +88,53 @@ void execute_ls(message_t* message, int socket){
     strcat(ls, dir_name);
 
     fp = popen(ls,"r");
-  
-    // enviar pTmp para o client
-    // envia o ok
-    printf("Vou enviar o ok\n");
-    setHeader(&response, OK);
-    sendMessage(socket, &response, 1);
-    printf("Enviei o ok\n");
-    // recebe ack do ok
-    while (server_can_read() != 1); 
-    response = createMessage();
-    if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
-        fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+    
+    flag = fgets(pTmp, BUFFER-1, fp);
+
+    if (flag == 0){ // erro
+        setHeader(&newMessage, ERRO);
+        newMessage.data[0] = DIR_E;
+        verticalParity(&newMessage);
+        sendMessage(socket, &newMessage, 1);
         return;
     }
-    if(response.type != ACK)
-        return;
     
-    // diz que vai comecar
+    // envia o ok
+    while(response.type != ACK) {
+        printf("Vou enviar o ok\n");
+        setHeader(&newMessage, OK);
+        sendMessage(socket, &newMessage, 1);
+        printf("Enviei o ok\n");
+        // recebe ack do ok
+        while (server_can_read() != 1); 
+        response = createMessage();
+        if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    }
     printf("Recebi ack do ok\nVou enviar o TX\n");
     response = createMessage();
-    setHeader(&response, TX);
-    sendMessage(socket, &response, 1);
-    printf("Enviei o TX\n");
-    while (server_can_read() != 1); 
-    response = createMessage();
-    if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
-        fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
-        return;
+    // diz que vai comecar
+    while(response.type != ACK) {
+        newMessage = createMessage();
+        setHeader(&newMessage, TX);
+        sendMessage(socket, &newMessage, 1);
+        printf("Enviei o TX\n");
+
+        // recebe ack do tx
+        while (server_can_read() != 1); 
+        response = createMessage();
+        if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
     }
-    if(response.type != ACK)
-        return;
     printf("Recebi ack do tx\n");
+
     // envia os dados
     lsData = createMessage();
-    while (fgets(pTmp, BUFFER-1, fp)) {
+    while (flag) {
         printf("Comecando nova msg\n");
         setHeader(&lsData, DADOS);
         lsData.sequence = sequence % MAX_SEQ;
@@ -147,11 +161,12 @@ void execute_ls(message_t* message, int socket){
         // reenviar
         else if (response.type == NACK)
             printf("Recebi um nack\n");
+
+        flag = fgets(pTmp, BUFFER-1, fp);
     }
-    response = createMessage();
-    setHeader(&response, FIM_TX);
-    sendMessage(socket, &response, 1);
-    
+    newMessage = createMessage();
+    setHeader(&newMessage, FIM_TX);
+    sendMessage(socket, &newMessage, 1);
     
 }
 

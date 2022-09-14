@@ -215,75 +215,73 @@ void execute_ls_server(int socket){
 
         verticalParity(&message);
     }
-    
-    sendMessage(socket, &message,  0);
+    while (response.type != OK) {
+        sendMessage(socket, &message,  0);
 
-    // Espera um ok
-    while (client_can_read() != 1);
-
-    response = createMessage();
-    if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
-        fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
-        return;
-    }
-
-    if (response.type != OK) {
-        fprintf(stdout, "Algo deu errado\n");
-        return;
-    }
-    else {
-        printf("Recebi ok\n");
-        message = createMessage();
-        setHeader(&message, ACK);
-        sendMessage(socket, &message, 0);
-        rapido = 0;
-        // espera o comeco da transmissao
+        // Espera um ok
         while (client_can_read() != 1);
+
         response = createMessage();
         if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
             fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
             return;
         }
 
-        if (response.type != TX){
-            fprintf(stderr, "Algo deu errado\n");
-            return;
-        }
-        else {
-            printf("Recebi TX\n");
-            message = createMessage();
-            setHeader(&message, ACK);
-            sendMessage(socket, &message, 0);
-            while(1) {
-                while (client_can_read() != 1);
-                response = createMessage();
-                if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
-                    message = createMessage();
-                    setHeader(&message, NACK);
-                    sendMessage(socket, &message, 0);
-                    
-                }
-                if (response.type == FIM_TX)
-                    return;
-                else if (response.type == DADOS) {
-                    fprintf(stdout, "%s", (char *)response.data);
-                    message = createMessage();
-                    setHeader(&message, ACK);
-                    sendMessage(socket, &message, 0);
-                }
-                else {
-                    message = createMessage();
-                    setHeader(&message, ACK);
-                    sendMessage(socket, &message, 0);
-                }
+        if (response.type == ERRO){
+            checkParity(&response);
+            if (response.data[0] = DIR_E) {
+                printf("O diretório informado não existe\n");
+                   return;
             }
-            
+        }
 
+    }
+    printf("Recebi ok\n");
+    message = createMessage();
+    setHeader(&message, ACK);
+    sendMessage(socket, &message, 0);
+    // espera o comeco da transmissao
+    while (client_can_read() != 1);
+    response = createMessage();
+    if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+        fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+        return;
+    }
+    if (response.type != TX){
+        fprintf(stderr, "Algo deu errado\n");
+        return;
+    }
+    else {
+        printf("Recebi TX\n");
+        message = createMessage();
+        setHeader(&message, ACK);
+        sendMessage(socket, &message, 0);
+        while(1) {
+            while (client_can_read() != 1);
+            response = createMessage();
+            if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+                message = createMessage();
+                setHeader(&message, NACK);
+                sendMessage(socket, &message, 0);
+                
+            }
+            if (response.type == FIM_TX)
+                return;
+            else if (response.type == DADOS) {
+                fprintf(stdout, "%s", (char *)response.data);
+                message = createMessage();
+                setHeader(&message, ACK);
+                sendMessage(socket, &message, 0);
+            }
+            else {
+                message = createMessage();
+                setHeader(&message, ACK);
+                sendMessage(socket, &message, 0);
+            }
         }
         
     }
-
-    
+        
     // response = createMessage();
     // recvMessage(socket, &response, 1);
 
