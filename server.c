@@ -53,8 +53,8 @@ int main() {
             execute_get_server(&package, socket);
             break;
 
-        case 4:
-            execute_put_server();
+        case 10:
+            execute_put_server(&package, socket);
             break;
         
         default:

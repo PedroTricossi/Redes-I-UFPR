@@ -327,20 +327,17 @@ void execute_get(int socket){
     fp = fopen("teste123", "w");
     if (!fp)
         return;
-    //chmod(file_name, 0777);
 
+    // envia o get e nome do arquivo
     while (response.type != OK) {
         sendMessage(socket, &message,  0);
-        printf("mandei get\n");
         // Espera um ok
         while (client_can_read() != 1);
-
         response = createMessage();
         if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
             fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
             return;
         }
-
         if (response.type == ERRO){
             checkParity(&response);
             if (response.data[0] == DIR_E) {
@@ -350,7 +347,6 @@ void execute_get(int socket){
         }
 
     }
-    printf("Recebi ok\n");
     message = createMessage();
     setHeader(&message, ACK);
     sendMessage(socket, &message, 0);
@@ -366,7 +362,6 @@ void execute_get(int socket){
         return;
     }
     else {
-        printf("Recebi TX\n");
         message = createMessage();
         setHeader(&message, ACK);
         sendMessage(socket, &message, 0);
@@ -379,28 +374,31 @@ void execute_get(int socket){
                 sendMessage(socket, &message, 0);
                 
             }
+            // verifica paridade e manda nack se tiver errado
             if (!checkParity(&response)){
                 setHeader(&message, NACK);
                 sendMessage(socket, &message, 0);
             }
-            
+            // verifica se é fim de tx
             if (response.type == FIM_TX) {
                 printf("Arquivo recebido.\n");
                 fclose(fp);
                 return;
             }
+            // se for dados, grava no arquivo
             else if (response.type == DADOS) {
-                for (int j = 0; j < MAX_DATA; j++) {
-                    fwrite(&response.data[j], 1, 1, fp);
+                for (int j = 0; j < response.data_size; j++) {
+                    //if (response.data[j] != 0) {
+                        fwrite(&response.data[j], 1, 1, fp);
+                    //}
                     
                 }
-                
                 
                 message = createMessage();
                 setHeader(&message, ACK);
                 sendMessage(socket, &message, 0);
             }
-            else {
+            else { // lixo
                 message = createMessage();
                 setHeader(&message, ACK);
                 sendMessage(socket, &message, 0);
@@ -408,7 +406,167 @@ void execute_get(int socket){
         }
         
     }
+    fclose(fp);
+
 }
 
-// TODO
-void execute_put(){}
+// DONE
+void execute_put(int socket){
+    char *file_name;
+    message_t message, response, putData;
+    FILE *fp;
+    struct stat st;
+    int size = 0, flag, sequence,  i;
+
+    file_name = malloc(STRING_MAX_SIZE * sizeof(char));
+    scanf("%s", file_name);
+    int fname_size = strlen(file_name);
+
+    message = createMessage();
+    response = createMessage();
+
+    if (fname_size > MAX_DATA) {
+        printf("Invalid file name: maximum allowed file name has length %d\n", MAX_DATA);
+    }
+    else {
+        message.data_size = fname_size;
+        message.sequence = 0;
+        message.type = PUT;
+
+        for(int i = 0; i < fname_size; i++) {
+            message.data[i] = file_name[i];
+        }
+
+        verticalParity(&message);
+    }
+
+    // Manda o nome do arquivo
+    while (response.type != OK) {
+        sendMessage(socket, &message,  0);
+        //printf("mandei put %s\n", file_name);
+        // Espera um ok
+        while (client_can_read() != 1);
+
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    }
+    //printf("recebi ok\n");
+    message = createMessage();
+    setHeader(&message, ACK);
+    sendMessage(socket, &message, 0);
+
+    fp = fopen(file_name, "r");
+    if (!fp) {
+        printf("Não foi possível abrir %s.\n", file_name);
+        return;
+    }
+
+    stat(file_name, &st); 
+    size = st.st_size; // tamanho do arquivo
+
+    message = createMessage();
+    response = createMessage();
+
+    message.data_size = sizeof(int);
+    message.data[0] = size;
+    message.type = PUT;
+    verticalParity(&message);
+
+    // Manda o tamanho do arquivo
+    while (response.type != ACK) {
+        sendMessage(socket, &message,  0);
+        //printf("mandei tam put\n");
+        // Espera um ok
+        while (client_can_read() != 1);
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+        // confere se houve erro
+        if (response.type == ERRO){
+            if (response.data[0] == NO_SPACE) {
+                printf("Sem espaço no server para transferir o arquivo.\n");
+            }
+            return;
+            
+        }
+    }
+
+    // Manda um TX
+    response = createMessage();
+    while(response.type != ACK) {
+        message = createMessage();
+        setHeader(&message, TX);
+        sendMessage(socket, &message, 1);
+        //printf("Enviei o TX\n");
+
+        // recebe ack do tx
+        while (server_can_read() != 1); 
+        response = createMessage();
+        if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    }
+    // comeca a enviar os dados
+    putData = createMessage();
+    putData.sequence = sequence % MAX_SEQ;
+    putData.data_size = MAX_DATA;
+    setHeader(&putData, DADOS);
+    flag = fread(putData.data, MAX_DATA, 1, fp);
+
+
+    while (flag == 1) {
+        verticalParity(&putData);
+        sendMessage(socket, &putData, 1);
+        // espera ack ou nack
+        while (server_can_read() != 1); 
+        response = createMessage();
+        if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    
+        // mandar a prox
+        if(response.type == ACK) {
+            //printf("recebi um ack\n");
+            sequence++;
+            putData = createMessage();
+            putData.data_size = MAX_DATA;
+            flag = fread(putData.data, MAX_DATA, 1, fp);
+            putData.sequence = sequence % MAX_SEQ;
+            setHeader(&putData, DADOS);
+
+        }
+    }
+    
+    for (i = 0; i < MAX_DATA; i++){
+        if (putData.data[i] == 0) {
+            break;
+        }
+    }
+    
+    printf("%d\n", i);
+    response = createMessage();
+    verticalParity(&putData);
+    putData.data_size = i;
+    // manda o final
+    while (response.type != ACK) {
+        sendMessage(socket, &putData, 1);
+        while (server_can_read() != 1); 
+        response = createMessage();
+        if(recvMessage(socket, &response, 0) == 2 || recvMessage(socket, &response, 0) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+    }
+
+    message = createMessage();
+    setHeader(&message, FIM_TX);
+    sendMessage(socket, &message, 1);
+    
+}

@@ -14,6 +14,6 @@ int execute_mkdir(message_t* message, int socket);
 void execute_get_server(message_t *message, int socket);
 
 // TODO
-void execute_put_server();
+void execute_put_server(message_t *message_t, int socket);
 
 #endif

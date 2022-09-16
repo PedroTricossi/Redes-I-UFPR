@@ -49,7 +49,7 @@ int main() {
         else if (strncmp("get", comando, 3) == 0){
             execute_get(socket);
         } else if (strncmp("put", comando, 3) == 0){
-            execute_put();
+            execute_put(socket);
         }
     }
 

@@ -10,7 +10,7 @@
 
 // Types
 enum TIPOS {CD = 6, LS = 7, MKDIR = 8, ACK = 3, NACK = 2, ERRO = 17, TX = 63, FIM_TX = 46, GET = 9, DESCRITOR = 24, DADOS = 32, PUT = 10, OK = 1};
-enum ERROS {DIR_E = 'a', PERMISSION_E = 'b', DIR_ALREADY_EXIST = 'c', ARQ_ALREADY_EXIST = 'd'};
+enum ERROS {DIR_E = 'a', PERMISSION_E = 'b', DIR_ALREADY_EXIST = 'c', ARQ_ALREADY_EXIST = 'd', NO_SPACE = 'e'};
 
 typedef struct {
     unsigned char marker;
