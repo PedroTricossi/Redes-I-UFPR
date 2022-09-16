@@ -24,7 +24,7 @@ void execute_mkdir_server(int socket);
 void execute_ls_server(int socket);
 
 // TODO
-void execute_get();
+void execute_get(int socket);
 
 // TODO
 void execute_put();

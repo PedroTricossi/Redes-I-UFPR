@@ -47,7 +47,7 @@ int main() {
             execute_ls_server(socket);
         } 
         else if (strncmp("get", comando, 3) == 0){
-            execute_get();
+            execute_get(socket);
         } else if (strncmp("put", comando, 3) == 0){
             execute_put();
         }

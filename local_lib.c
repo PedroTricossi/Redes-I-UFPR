@@ -229,7 +229,7 @@ void execute_ls_server(int socket){
 
         if (response.type == ERRO){
             checkParity(&response);
-            if (response.data[0] = DIR_E) {
+            if (response.data[0] == DIR_E) {
                 printf("O diretório informado não existe\n");
                    return;
             }
@@ -296,8 +296,119 @@ void execute_ls_server(int socket){
     sendResponse(socket, &message);
 }
 
-// TODO
-void execute_get(){}
+// DOING
+void execute_get(int socket){
+    char *file_name;
+    message_t message, response;
+    FILE *fp;
+
+    file_name = malloc(STRING_MAX_SIZE * sizeof(char));
+    scanf("%s", file_name);
+    int fname_size = strlen(file_name);
+
+    message = createMessage();
+    response = createMessage();
+
+    if (fname_size > MAX_DATA) {
+        printf("Invalid file name: maximum allowed file name has length %d\n", MAX_DATA);
+    }
+    else {
+        message.data_size = fname_size;
+        message.sequence = 0;
+        message.type = GET;
+
+        for(int i = 0; i < fname_size; i++) {
+            message.data[i] = file_name[i];
+        }
+
+        verticalParity(&message);
+    }
+
+    fp = fopen("teste123", "w");
+    if (!fp)
+        return;
+    //chmod(file_name, 0777);
+
+    while (response.type != OK) {
+        sendMessage(socket, &message,  0);
+        printf("mandei get\n");
+        // Espera um ok
+        while (client_can_read() != 1);
+
+        response = createMessage();
+        if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+            fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+            return;
+        }
+
+        if (response.type == ERRO){
+            checkParity(&response);
+            if (response.data[0] == DIR_E) {
+                printf("O arquivo informado não existe\n");
+                   return;
+            }
+        }
+
+    }
+    printf("Recebi ok\n");
+    message = createMessage();
+    setHeader(&message, ACK);
+    sendMessage(socket, &message, 0);
+    // espera o comeco da transmissao
+    while (client_can_read() != 1);
+    response = createMessage();
+    if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+        fprintf(stderr, "DON'T PANIC! \n EVERYTHING GONNA BE AL... \n");
+        return;
+    }
+    if (response.type != TX){
+        fprintf(stderr, "Algo deu errado\n");
+        return;
+    }
+    else {
+        printf("Recebi TX\n");
+        message = createMessage();
+        setHeader(&message, ACK);
+        sendMessage(socket, &message, 0);
+        while(1) {
+            while (client_can_read() != 1);
+            response = createMessage();
+            if(recvMessage(socket, &response, 1) == 2 || recvMessage(socket, &response, 1) < 0){
+                message = createMessage();
+                setHeader(&message, NACK);
+                sendMessage(socket, &message, 0);
+                
+            }
+            if (!checkParity(&response)){
+                setHeader(&message, NACK);
+                sendMessage(socket, &message, 0);
+            }
+            
+            if (response.type == FIM_TX) {
+                printf("Arquivo recebido.\n");
+                fclose(fp);
+                return;
+            }
+            else if (response.type == DADOS) {
+                for (int j = 0; j < MAX_DATA; j++) {
+                    fwrite(&response.data[j], 1, 1, fp);
+                    
+                }
+                
+                
+                message = createMessage();
+                setHeader(&message, ACK);
+                sendMessage(socket, &message, 0);
+            }
+            else {
+                message = createMessage();
+                setHeader(&message, ACK);
+                sendMessage(socket, &message, 0);
+            }
+        }
+        
+    }
+}
 
 // TODO
 void execute_put(){}

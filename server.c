@@ -49,8 +49,8 @@ int main() {
             execute_mkdir(&package, socket);
             break;
         
-        case 3:
-            execute_get_server();
+        case 9:
+            execute_get_server(&package, socket);
             break;
 
         case 4:
